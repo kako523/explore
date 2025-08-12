@@ -1,10 +1,19 @@
 package com.kako.onestep.explore.controller;
 
 import com.kako.onestep.explore.dto.FeishuMessage;
+import com.kako.onestep.explore.dto.request.FeishuCardRequest;
+import com.kako.onestep.explore.dto.request.FeishuRichTextRequest;
+import com.kako.onestep.explore.dto.request.FeishuTextRequest;
 import com.kako.onestep.explore.service.FeishuBotService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -14,78 +23,74 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/feishu/bot")
 @RequiredArgsConstructor
+@Tag(name = "FeishuBot", description = "飞书机器人发送消息接口")
 public class FeishuBotController {
 
     private final FeishuBotService feishuBotService;
 
     /** 发送文本消息 */
+    @Operation(summary = "发送文本消息")
+    @ApiResponse(
+            responseCode = "200",
+            description = "执行结果",
+            content = @Content(schema = @Schema(implementation = Map.class)))
     @PostMapping("/send/text")
     public ResponseEntity<Map<String, Object>> sendTextMessage(
-            @RequestBody Map<String, String> request) {
-        String text = request.get("text");
-        if (text == null || text.trim().isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("success", false, "message", "文本内容不能为空"));
-        }
-
-        boolean success = feishuBotService.sendTextMessage(text);
+            @Valid @RequestBody FeishuTextRequest request) {
+        boolean success = feishuBotService.sendTextMessage(request.getText());
         return ResponseEntity.ok(
                 Map.of("success", success, "message", success ? "消息发送成功" : "消息发送失败"));
     }
 
     /** 发送富文本消息 */
+    @Operation(summary = "发送富文本消息")
     @PostMapping("/send/richtext")
     public ResponseEntity<Map<String, Object>> sendRichTextMessage(
-            @RequestBody Map<String, Object> request) {
-        try {
-            @SuppressWarnings("unchecked")
-            List<Map<String, String>> elementsData =
-                    (List<Map<String, String>>) request.get("elements");
+            @Valid @RequestBody FeishuRichTextRequest request) {
+        // 构造符合飞书post规范的富文本消息
+        List<List<FeishuMessage.Element>> content =
+                request.getContent().stream()
+                        .map(
+                                row ->
+                                        row.stream()
+                                                .map(
+                                                        element ->
+                                                                FeishuMessage.Element.builder()
+                                                                        .tag(element.getTag())
+                                                                        .text(element.getText())
+                                                                        .href(element.getHref())
+                                                                        .build())
+                                                .collect(Collectors.toList()))
+                        .collect(Collectors.toList());
 
-            if (elementsData == null || elementsData.isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("success", false, "message", "富文本元素不能为空"));
-            }
+        FeishuMessage message =
+                FeishuMessage.builder()
+                        .msgType("post")
+                        .content(
+                                FeishuMessage.Content.builder()
+                                        .post(
+                                                FeishuMessage.Post.builder()
+                                                        .zhCn(
+                                                                FeishuMessage.Post.ZhCn.builder()
+                                                                        .title(request.getTitle())
+                                                                        .content(content)
+                                                                        .build())
+                                                        .build())
+                                        .build())
+                        .build();
 
-            List<FeishuMessage.Element> elements =
-                    elementsData.stream()
-                            .map(
-                                    elementData ->
-                                            FeishuMessage.Element.builder()
-                                                    .tag(elementData.get("tag"))
-                                                    .text(elementData.get("text"))
-                                                    .href(elementData.get("href"))
-                                                    .build())
-                            .collect(Collectors.toList());
-
-            boolean success = feishuBotService.sendRichTextMessage(elements);
-            return ResponseEntity.ok(
-                    Map.of("success", success, "message", success ? "富文本消息发送成功" : "富文本消息发送失败"));
-        } catch (Exception e) {
-            log.error("发送富文本消息时发生异常", e);
-            return ResponseEntity.badRequest()
-                    .body(Map.of("success", false, "message", "请求格式错误: " + e.getMessage()));
-        }
+        boolean success = feishuBotService.sendMessageViaWebhook(message);
+        return ResponseEntity.ok(
+                Map.of("success", success, "message", success ? "富文本消息发送成功" : "富文本消息发送失败"));
     }
 
     /** 发送卡片消息 */
+    @Operation(summary = "发送卡片消息")
     @PostMapping("/send/card")
     public ResponseEntity<Map<String, Object>> sendCardMessage(
-            @RequestBody Map<String, String> request) {
-        String title = request.get("title");
-        String content = request.get("content");
-
-        if (title == null || title.trim().isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("success", false, "message", "卡片标题不能为空"));
-        }
-
-        if (content == null || content.trim().isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("success", false, "message", "卡片内容不能为空"));
-        }
-
-        boolean success = feishuBotService.sendCardMessage(title, content);
+            @Valid @RequestBody FeishuCardRequest request) {
+        boolean success =
+                feishuBotService.sendCardMessage(request.getTitle(), request.getContent());
         return ResponseEntity.ok(
                 Map.of("success", success, "message", success ? "卡片消息发送成功" : "卡片消息发送失败"));
     }

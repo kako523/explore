@@ -25,6 +25,7 @@ public class FeishuMessage {
     public static class Content {
         private String text;
         private List<Element> elements;
+        private Post post;
     }
 
     @Data
@@ -35,6 +36,24 @@ public class FeishuMessage {
         private String tag;
         private String text;
         private String href;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Post {
+        @JsonProperty("zh_cn")
+        private ZhCn zhCn;
+
+        @Data
+        @Builder
+        @NoArgsConstructor
+        @AllArgsConstructor
+        public static class ZhCn {
+            private String title;
+            private List<List<Element>> content;
+        }
     }
 
     // 创建文本消息的便捷方法

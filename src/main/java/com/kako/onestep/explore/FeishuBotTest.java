@@ -4,7 +4,6 @@ import com.kako.onestep.explore.dto.FeishuMessage;
 import com.kako.onestep.explore.service.FeishuBotService;
 import java.util.Arrays;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
 
 /*
  飞书机器人测试类
@@ -17,7 +16,7 @@ import org.springframework.stereotype.Component;
  * component注解：@Component 注解告诉Spring Boot这是一个需要管理的组件 Spring Boot会自动扫描并创建这个类的实例 这个注解让Spring
  * Boot知道这个类需要被"自动装配"
  */
-@Component
+// @Component
 public class FeishuBotTest implements CommandLineRunner {
 
     private final FeishuBotService feishuBotService;
