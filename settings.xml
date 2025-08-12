@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 
+          http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+    <mirrors>
+        <!-- 阿里云Maven镜像 -->
+        <mirror>
+            <id>aliyunmaven</id>
+            <mirrorOf>*</mirrorOf>
+            <name>阿里云公共仓库</name>
+            <url>https://maven.aliyun.com/repository/public</url>
+        </mirror>
+        
+        <!-- 华为云Maven镜像 -->
+        <mirror>
+            <id>huaweicloud</id>
+            <mirrorOf>*,!central</mirrorOf>
+            <name>华为云公共仓库</name>
+            <url>https://mirrors.huaweicloud.com/repository/maven/</url>
+        </mirror>
+        
+        <!-- 腾讯云Maven镜像 -->
+        <mirror>
+            <id>tencent</id>
+            <mirrorOf>*,!central</mirrorOf>
+            <name>腾讯云公共仓库</name>
+            <url>https://mirrors.cloud.tencent.com/nexus/repository/maven-public/</url>
+        </mirror>
+    </mirrors>
+
+    <profiles>
+        <profile>
+            <id>jdk-11</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+                <jdk>11</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.source>11</maven.compiler.source>
+                <maven.compiler.target>11</maven.compiler.target>
+                <maven.compiler.compilerVersion>11</maven.compiler.compilerVersion>
+            </properties>
+        </profile>
+    </profiles>
+
+    <servers>
+        <!-- 如果需要私有仓库认证，可以在这里配置 -->
+    </servers>
+
+</settings>
