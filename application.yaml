@@ -57,3 +57,9 @@ spring:
             login-password: druid
             # IP白名单
             allow: 127.0.0.1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus    # 只暴露 /actuator/prometheus
